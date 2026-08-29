@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailStatus {
+  PENDING     // created, waiting to be enqueued
+  SCHEDULED   // enqueued into BullMQ as a delayed job
+  RATE_DELAYED // hit hourly rate limit, pushed to next window
+  SENT
+  FAILED
+}
+
+model Sender {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  emails    ScheduledEmail[]
+}
+
+model Campaign {
+  id           String   @id @default(uuid())
+  subject      String
+  body         String   @db.Text
+  createdAt    DateTime @default(now())
+  delayMs      Int      @default(2000)   // min delay between sends for this campaign
+  hourlyLimit  Int      @default(200)    // per-sender hourly cap for this campaign
+  emails       ScheduledEmail[]
+}
+
+// Each row = one recipient email belonging to a campaign, tracked individually
+// so we get per-email status, restart-safe recovery, and idempotency.
+model ScheduledEmail {
+  id            String      @id @default(uuid())
+  campaignId    String
+  campaign      Campaign    @relation(fields: [campaignId], references: [id])
+  senderId      String
+  sender        Sender      @relation(fields: [senderId], references: [id])
+
+  recipient     String
+  subject       String
+  body          String      @db.Text
+
+  scheduledAt   DateTime    // when it *should* send
+  sentAt        DateTime?
+  status        EmailStatus @default(PENDING)
+
+  // BullMQ job id that owns this row - lets us dedupe / avoid re-enqueue on restart
+  bullJobId     String?     @unique
+
+  failReason    String?
+  retryCount    Int         @default(0)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([status])
+  @@index([senderId, status])
+  @@index([scheduledAt])
+}
+
+model SlackConfig {
+  id           String   @id @default(uuid())
+  tenantId     String   @unique  // single-tenant for this assignment, but modeled for multi-tenant
+  accessToken  String   // bot token from OAuth v2 exchange
+  webhookUrl   String   // incoming_webhook.url returned by Slack's OAuth response (NOT manually pasted)
+  channelName  String?
+  teamName     String?
+  connected    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
