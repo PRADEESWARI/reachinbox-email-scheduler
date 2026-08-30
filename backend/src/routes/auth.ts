@@ -28,7 +28,7 @@ router.get(
       token,
       user: JSON.stringify(user),
     });
-    res.redirect(`${FRONTEND_URL}/auth/callback?${params.toString()}`);
+    res.redirect(`${FRONTEND_URL}/?${params.toString()}`);
   }
 );
 
