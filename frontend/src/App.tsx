@@ -21,9 +21,8 @@ export default function App() {
     const saved = localStorage.getItem("user");
     if (saved) setUser(JSON.parse(saved));
 
-    // Handle the redirect back from /api/auth/google/callback, which
-    // appends ?token=...&user=... on the /auth/callback path.
-    if (window.location.pathname === "/auth/callback") {
+    // Fix for Vercel SPA routing
+    if (window.location.pathname === "/auth/callback" || window.location.search.includes("token=")) {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("token");
       const userParam = params.get("user");
@@ -37,7 +36,6 @@ export default function App() {
   }, []);
 
   function handleLogin() {
-    // Real redirect into the backend's Google OAuth flow (passport-google-oauth20).
     window.location.href = "https://reachinbox-api-45cg.onrender.com/api/auth/google";
   }
 
@@ -50,7 +48,6 @@ export default function App() {
   async function loadSenders() {
     const res = await api.get<Sender[]>("/senders");
     if (res.data.length === 0) {
-      // Seed a couple of demo senders so Compose isn't empty on first run.
       const seeded = await Promise.all([
         api.post("/senders", { name: "Alex from ReachInbox", email: "alex@reachinbox.dev" }),
         api.post("/senders", { name: "Outreach Bot", email: "outreach@reachinbox.dev" }),
@@ -80,9 +77,8 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     loadRows();
-    const interval = setInterval(loadRows, 4000); // light polling for live-ish updates
+    const interval = setInterval(loadRows, 4000); 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, tab, search]);
 
   if (!user) {
