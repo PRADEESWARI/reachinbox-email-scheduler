@@ -38,7 +38,7 @@ export default function App() {
 
   function handleLogin() {
     // Real redirect into the backend's Google OAuth flow (passport-google-oauth20).
-    window.location.href = "/api/auth/google";
+    window.location.href = "https://reachinbox-api-45cg.onrender.com/api/auth/google";
   }
 
   function handleLogout() {
