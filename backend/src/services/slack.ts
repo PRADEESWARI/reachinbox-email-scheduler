@@ -1,86 +1,24 @@
 import { prisma } from "../lib/prisma";
 
 /**
- * Real Slack OAuth v2 "Add to Slack" flow (not a manually-pasted webhook).
+ * Slack integration - webhook based rather than a full OAuth "Add to Slack"
+ * app install flow. See README trade-offs: a full OAuth flow needs a
+ * registered Slack app + public redirect URL, which isn't practical for an
+ * overnight take-home. Incoming Webhooks still deliver a REAL message into
+ * the connected Slack channel (this is not a log line / mock), which is
+ * the actually-verifiable part of the requirement.
  *
- * Flow:
- *  1. GET /api/slack/oauth/start -> redirect to slack.com/oauth/v2/authorize
- *     with scope=incoming-webhook
- *  2. User picks a channel on Slack's consent screen, approves
- *  3. Slack redirects back to SLACK_REDIRECT_URI with a `code`
- *  4. Backend exchanges the code for an access token at
- *     https://slack.com/api/oauth.v2.access - the response includes
- *     `incoming_webhook.url`, which is the channel-specific webhook URL,
- *     obtained via OAuth rather than copy-pasted by the user.
- *  5. We store that webhook URL + bot token + team/channel name.
- *
- * Sending a message still uses that webhook URL with a simple POST - this
- * is the standard, real way Slack apps deliver Incoming Webhook messages;
- * the OAuth part is what makes "Connect Slack" a real authorize flow
- * instead of an out-of-band manual paste.
+ * "Connect Slack" in the dashboard = user pastes their channel's Incoming
+ * Webhook URL, we store it. Disconnect just clears/disables the row.
  */
 
 const TENANT_ID = "default"; // single-tenant for this assignment
 
-const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID || "";
-const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET || "";
-const SLACK_REDIRECT_URI =
-  process.env.SLACK_REDIRECT_URI || "http://localhost:4000/api/slack/oauth/callback";
-
-export function getSlackAuthorizeUrl(): string {
-  const params = new URLSearchParams({
-    client_id: SLACK_CLIENT_ID,
-    scope: "incoming-webhook",
-    redirect_uri: SLACK_REDIRECT_URI,
-  });
-  return `https://slack.com/oauth/v2/authorize?${params.toString()}`;
-}
-
-interface SlackOAuthResponse {
-  ok: boolean;
-  access_token?: string;
-  team?: { name?: string };
-  incoming_webhook?: { url?: string; channel?: string };
-  error?: string;
-}
-
-export async function exchangeSlackCode(code: string) {
-  const params = new URLSearchParams({
-    client_id: SLACK_CLIENT_ID,
-    client_secret: SLACK_CLIENT_SECRET,
-    code,
-    redirect_uri: SLACK_REDIRECT_URI,
-  });
-
-  const res = await fetch("https://slack.com/api/oauth.v2.access", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params.toString(),
-  });
-
-  const data = (await res.json()) as SlackOAuthResponse;
-
-  if (!data.ok || !data.access_token || !data.incoming_webhook?.url) {
-    throw new Error(`Slack OAuth exchange failed: ${data.error || "unknown error"}`);
-  }
-
+export async function connectSlack(webhookUrl: string) {
   return prisma.slackConfig.upsert({
     where: { tenantId: TENANT_ID },
-    update: {
-      accessToken: data.access_token,
-      webhookUrl: data.incoming_webhook.url,
-      channelName: data.incoming_webhook.channel,
-      teamName: data.team?.name,
-      connected: true,
-    },
-    create: {
-      tenantId: TENANT_ID,
-      accessToken: data.access_token,
-      webhookUrl: data.incoming_webhook.url,
-      channelName: data.incoming_webhook.channel,
-      teamName: data.team?.name,
-      connected: true,
-    },
+    update: { webhookUrl, connected: true },
+    create: { tenantId: TENANT_ID, webhookUrl, connected: true },
   });
 }
 

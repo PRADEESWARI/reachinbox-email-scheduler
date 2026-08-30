@@ -65,12 +65,9 @@ model ScheduledEmail {
 }
 
 model SlackConfig {
-  id           String   @id @default(uuid())
-  tenantId     String   @unique  // single-tenant for this assignment, but modeled for multi-tenant
-  accessToken  String   // bot token from OAuth v2 exchange
-  webhookUrl   String   // incoming_webhook.url returned by Slack's OAuth response (NOT manually pasted)
-  channelName  String?
-  teamName     String?
-  connected    Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id         String   @id @default(uuid())
+  tenantId   String   @unique  // single-tenant for this assignment, but modeled for multi-tenant
+  webhookUrl String
+  connected  Boolean  @default(true)
+  createdAt  DateTime @default(now())
 }

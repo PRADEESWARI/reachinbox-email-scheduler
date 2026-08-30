@@ -79,10 +79,9 @@ async function processJob(job: Job<EmailJobData>) {
       html: row.body,
     });
 
-    const sentAt = new Date();
     await prisma.scheduledEmail.update({
       where: { id: row.id },
-      data: { status: "SENT", sentAt },
+      data: { status: "SENT", sentAt: new Date() },
     });
 
     console.log(
@@ -97,7 +96,6 @@ async function processJob(job: Job<EmailJobData>) {
         retryCount: { increment: 1 },
       },
     });
-
     throw err; // let BullMQ's attempts/backoff retry it
   }
 }

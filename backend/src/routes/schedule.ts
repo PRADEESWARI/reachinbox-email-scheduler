@@ -105,9 +105,7 @@ router.post("/campaigns", async (req, res) => {
   res.status(201).json({ campaign, scheduledCount: created.length });
 });
 
-// GET /api/emails/scheduled?search= - Postgres ILIKE search over
-// recipient/subject (see README trade-offs: Elasticsearch was scoped out
-// in favor of this for time reasons).
+// GET /api/emails/scheduled?search=
 router.get("/emails/scheduled", async (req, res) => {
   const search = (req.query.search as string) || "";
   const rows = await prisma.scheduledEmail.findMany({

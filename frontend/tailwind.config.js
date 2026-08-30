@@ -4,38 +4,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        void: {
-          50: "#F7F7F9",
-          100: "#ECEDF1",
-          200: "#D6D8E0",
-          400: "#8A8FA3",
-          600: "#4A4F66",
-          800: "#1A1D2B",
-          900: "#0E1019",
-          950: "#0A0B12",
+        ink: {
+          50: "#EEF1F7",
+          100: "#D7DCE9",
+          400: "#4A5A7D",
+          600: "#26324A",
+          800: "#16223A",
+          900: "#0F1729",
         },
-        gold: {
-          300: "#EACD86",
-          400: "#DDB861",
-          500: "#C89A42",
-          600: "#A67E31",
+        postal: {
+          50: "#FBEEE9",
+          100: "#F3D2C6",
+          500: "#C4472C",
+          600: "#A73A22",
+          700: "#8A2F1B",
         },
-        sent: "#3FBE8E",
-        delayed: "#E0A952",
-        danger: "#E2607A",
+        paper: "#F3F4F2",
+        sent: "#1F8A5F",
+        delayed: "#B9791F",
       },
       fontFamily: {
         mono: ["'IBM Plex Mono'", "ui-monospace", "monospace"],
-        sans: ["'Plus Jakarta Sans'", "ui-sans-serif", "system-ui"],
-      },
-      boxShadow: {
-        glow: "0 0 0 1px rgba(200,154,66,0.15), 0 8px 24px -8px rgba(0,0,0,0.35)",
-        card: "0 1px 2px rgba(16,18,28,0.04), 0 8px 24px -12px rgba(16,18,28,0.12)",
-        panel: "0 20px 60px -20px rgba(10,11,18,0.45)",
-      },
-      backgroundImage: {
-        "gold-gradient": "linear-gradient(135deg, #DDB861 0%, #C89A42 100%)",
-        "void-gradient": "linear-gradient(180deg, #14172400 0%, #0A0B12 100%)",
+        sans: ["'Libre Franklin'", "ui-sans-serif", "system-ui"],
       },
     },
   },
